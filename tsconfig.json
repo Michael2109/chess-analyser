@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "module": "ES6",
+    "moduleResolution": "Bundler",
+    "esModuleInterop": true
+  }
+}
