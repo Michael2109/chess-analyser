@@ -1,5 +1,3 @@
-
-
 interface GameAnalysis {
     inaccuracies: Array<number>
     mistakes: Array<number>

@@ -1,11 +1,10 @@
-import GamesAnalysis from "./games-analysis.ts";
+import GamesSummary from "./games-summary.ts";
 import GameAnalysis from "./game-analysis.ts";
-import gameAnalysis from "./game-analysis.ts";
 
 class GameAnalyser {
 
 
-    static analyseGames(gameAnalyses: Array<GameAnalysis>): GamesAnalysis {
+    static summariseGames(gameAnalyses: Array<GameAnalysis>): GamesSummary {
 
         return {
             totalGames: gameAnalyses.length,

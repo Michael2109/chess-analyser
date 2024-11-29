@@ -7,7 +7,7 @@ import 'vue3-chessboard/style.css';
 import GameEvaluator from "../common/evaluation/game-evaluator.ts";
 import MoveEvaluation from "../common/evaluation/move-evaluation.ts";
 import GameAnalyser from "../common/analysis/game-analyser.ts";
-import GamesAnalyses from "../common/analysis/games-analysis.ts";
+import GamesAnalyses from "../common/analysis/games-summary.ts";
 import GamesAnalyser from "../common/analysis/games-analyser.ts";
 import GameAnalysis from "../common/analysis/game-analysis.ts";
 import GameEvaluation from "../common/evaluation/game-evaluation.ts";
@@ -25,16 +25,9 @@ const moves: Ref<Array<string>> = ref<Array<string>>([]);
 const gameAnalyses: Ref<Array<GameAnalysis>> = ref([])
 const gamesAnalyses: Ref<GamesAnalyses | undefined> = ref(undefined)
 
-
-watch(() => isAnalysisComplete.value, () => {
-  if (isAnalysisComplete.value && currentMove.value < moves.value.length - 1) {
-    //analyseNextMove()
-  }
-})
-
 onMounted(async () => {
 
-  const username = "michael2109"
+  const username = "magnuscarlsen"
 
   gamesDto.value = (await axios.get<GamesDto>(`https://api.chess.com/pub/player/${username}/games/2024/11`)).data
   const games = gamesDto.value.games.filter(game => game.time_class === "blitz")
@@ -74,30 +67,11 @@ onMounted(async () => {
       // Remove completed tasks from the queue
       taskQueue.splice(0, taskQueue.findIndex(t => t === gameEvaluationTask));
     }
-
-
-/*
-    const gameEvaluation = await GameEvaluator.evaluateGame(game, isWhite, (moveEvaluation: MoveEvaluation) => {
-
-
-      if (moveEvaluation.fen) {
-       // boardAPI.value?.setPosition(moveEvaluation.fen!)
-      }
-    })
-
-    gameAnalyses.value.push(GameAnalyser.analyseGame(gameEvaluation))
-    if (!isWhite) {
-      boardAPI.value?.toggleOrientation()
-    }*/
   }
-
 
   await Promise.all(taskQueue);
 
-  // boardAPI.value?.setPosition(gameEvaluations.value[0].moveEvaluations[gameEvaluations.value[0].firstBlunder!].fen!)
-
-
-  gamesAnalyses.value = GamesAnalyser.analyseGames(gameAnalyses.value)
+  gamesAnalyses.value = GamesAnalyser.summariseGames(gameAnalyses.value)
 
   console.log(gameAnalyses.value)
 })

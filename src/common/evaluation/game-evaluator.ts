@@ -3,6 +3,7 @@ import pgnParser from "pgn-parser";
 import {Chess} from "chess.js";
 import MoveEvaluation from "./move-evaluation.ts";
 import GameEvaluation from "./game-evaluation.ts";
+import EvaluationStatus from "./evaluation-status.ts";
 
 
 const STOCKFISH_DEPTH = 8
@@ -41,7 +42,7 @@ class GameEvaluator {
         return lanMoves;
     }
 
-    async evaluateGame(gameDto: GameDto, isWhite: boolean, listener: (moveAnalysis: MoveEvaluation) => void): Promise<GameEvaluation> {
+    async evaluateGame(gameDto: GameDto, isWhite: boolean, listener: (evaluationStatus: EvaluationStatus) => void): Promise<GameEvaluation> {
 
         return new Promise<GameEvaluation>(async (resolve) => {
 
@@ -65,10 +66,10 @@ class GameEvaluator {
                     //isAnalysisComplete.value = true
                     const scoreMatch = data.match(/score cp (-?\d+)/);
                     if (scoreMatch) {
-                        const score =  parseInt(scoreMatch[1], 10) * ((currentMove % 2 === 0) ? 1 : -1);
+                        const score = parseInt(scoreMatch[1], 10) * ((currentMove % 2 === 0) ? 1 : -1);
                         moveEvaluations.push({
-                            index: currentMove-1,
-                            move: moves[currentMove-1],
+                            index: currentMove - 1,
+                            move: moves[currentMove - 1],
                             score: score,
                             difference: score - previousScore
                         });
@@ -82,7 +83,7 @@ class GameEvaluator {
                     if (moveEvaluations.length > 0) {
                         const moveAnalysis = moveEvaluations[moveEvaluations.length - 1]
                         moveAnalysis.fen = fen
-                        listener(moveAnalysis)
+                        listener({currentMove: moveAnalysis.index, totalMoves: moves.length})
                     }
 
                     currentMove++;
@@ -91,7 +92,7 @@ class GameEvaluator {
                     } else {
                         stockfish.postMessage("quit");
                         stockfish.terminate()
-
+                        listener({currentMove: moves.length, totalMoves: moves.length})
                         resolve({
                                 white: {
                                     username: gameDto.white.username

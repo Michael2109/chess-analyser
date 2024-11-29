@@ -1,4 +1,3 @@
-
 interface MoveEvaluation {
     index: number;
     move: string;

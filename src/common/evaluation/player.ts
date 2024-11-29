@@ -1,4 +1,3 @@
-
 interface Player {
     username: string
 }
