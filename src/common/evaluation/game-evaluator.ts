@@ -2,8 +2,9 @@ import GameDto from "../game-dto.ts";
 import pgnParser from "pgn-parser";
 import {Chess} from "chess.js";
 import MoveEvaluation from "./move-evaluation.ts";
-import GameEvaluation from "./game-evaluation.ts";
+import  {EndStatus} from "./game-evaluation.ts";
 import EvaluationStatus from "./evaluation-status.ts";
+import GameAnalysis from "../analysis/game-analysis.ts";
 
 
 const STOCKFISH_DEPTH = 8
@@ -42,9 +43,70 @@ class GameEvaluator {
         return lanMoves;
     }
 
-    async evaluateGame(gameDto: GameDto, isWhite: boolean, listener: (evaluationStatus: EvaluationStatus) => void): Promise<GameEvaluation> {
+    static getEndStatus(gameDto: GameDto, isWhite: boolean): EndStatus {
+        const playerInfo = isWhite ? gameDto.white : gameDto.black
+        switch (playerInfo.result) {
+            case "win":
+                return EndStatus.WIN
+            case "checkmated":
+                return EndStatus.LOSS
+            case "agreed":
+                return EndStatus.DRAW
+            case "repetition":
+                return EndStatus.DRAW
+            case "timeout":
+                return EndStatus.LOSS
+            case "resigned":
+                return EndStatus.LOSS
+            case "stalemate":
+                return EndStatus.DRAW
+            case "lose":
+                return EndStatus.LOSS
+            case "insufficient":
+                return EndStatus.DRAW
+            case "50move":
+                return EndStatus.DRAW
+            case "abandoned":
+                return EndStatus.LOSS
+            case "timevsinsufficient":
+                return EndStatus.DRAW
+            default:
+                throw new Error(`Unknown result: ${playerInfo.result}`)
+        }
+    }
 
-        return new Promise<GameEvaluation>(async (resolve) => {
+    private static findScoreChanges(isWhite: boolean, moveEvaluations: Array<MoveEvaluation>, centipawnMin: number, centipawnMax: number): Array<number> {
+
+        const blunders: Array<number> = []
+
+
+        for (let moveIndex = 0; moveIndex < moveEvaluations.length; moveIndex++) {
+            const moveEvaluation = moveEvaluations[moveIndex]
+
+
+            if (isWhite && moveIndex % 2 === 0) {
+
+                // Whites move
+                if (moveEvaluation.difference < -centipawnMax && moveEvaluation.difference > -centipawnMin) {
+
+                    blunders.push(moveIndex)
+                }
+            }
+            if (!isWhite && moveIndex % 2 === 1) {
+
+                // Blacks move
+                if (moveEvaluation.difference > centipawnMin && moveEvaluation.difference < centipawnMax) {
+                    blunders.push(moveIndex)
+
+                }
+            }
+        }
+        return blunders
+    }
+
+    async evaluateGame(gameDto: GameDto, isWhite: boolean, listener: (evaluationStatus: EvaluationStatus) => void): Promise<GameAnalysis> {
+
+        return new Promise<GameAnalysis>(async (resolve) => {
 
             const stockfish = new Worker('/stockfish.js');
 
@@ -93,20 +155,19 @@ class GameEvaluator {
                         stockfish.postMessage("quit");
                         stockfish.terminate()
                         listener({currentMove: moves.length, totalMoves: moves.length})
-                        resolve({
-                                white: {
-                                    username: gameDto.white.username
-                                },
-                                black: {
-                                    username: gameDto.black.username
-                                },
-                                isWhite: isWhite,
-                                timeControl: gameDto.time_control,
-                                uuid: gameDto.uuid,
-                                moveEvaluations: moveEvaluations,
-                                url: gameDto.url,
-                            }
-                        )
+
+                        const gameAnalysis: GameAnalysis = {
+                            isWhite: isWhite,
+                            endInfo: {
+                                status: GameEvaluator.getEndStatus(gameDto, isWhite)
+                            },
+                            totalMoves: moveEvaluations.length,
+                            inaccuracies: GameEvaluator.findScoreChanges(isWhite, moveEvaluations, 20, 50),
+                            mistakes: GameEvaluator.findScoreChanges(isWhite, moveEvaluations, 50, 150),
+                            blunders: GameEvaluator.findScoreChanges(isWhite, moveEvaluations, 150, Number.MAX_VALUE)
+                        }
+
+                        resolve(gameAnalysis)
                     }
                 } else if (messageEvent.data === "readyok") {
 

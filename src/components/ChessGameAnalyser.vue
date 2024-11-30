@@ -1,43 +1,38 @@
 <script setup lang="ts">
 
 import {Ref, ref} from "vue";
-import axios from "axios";
-import GamesDto from "../common/games-dto.ts";
-import GameEvaluation from "../common/evaluation/game-evaluation.ts";
 import GameEvaluator from "../common/evaluation/game-evaluator.ts";
-import GameAnalyser from "../common/analysis/game-analyser.ts";
 import GamesAnalyser from "../common/analysis/games-analyser.ts";
 import GameAnalysis from "../common/analysis/game-analysis.ts";
 import GamesSummary from "../common/analysis/games-summary.ts";
 import AllGamesSummary from "./AllGamesSummary.vue";
 import Chessdotcom from "../common/api/chessdotcom.ts";
-import gamesDto from "../common/games-dto.ts";
 
 const username = ref("michael2109")
 const depth = ref("8")
 const cores = ref("32")
 const gameType = ref("rapid")
 const gameTypeOptions = ref([
-  { name: 'New York', code: 'NY' },
-  { name: 'Rome', code: 'RM' },
-  { name: 'London', code: 'LDN' },
-  { name: 'Istanbul', code: 'IST' },
-  { name: 'Paris', code: 'PRS' }
+  {name: 'bullet'},
+  {name: 'blitz'},
+  {name: 'rapid'}
 ]);
 
 const gamesSummary: Ref<GamesSummary | undefined> = ref(undefined)
 const currentGame: Ref<number> = ref(0)
 const totalGames: Ref<number> = ref(0)
-const processingGames:  Ref<Map<number, number>> = ref(new Map<number, number>())
+const processingGames: Ref<Map<number, number>> = ref(new Map<number, number>())
 
 async function processGames() {
 
+  console.log(gameType.value)
+
   const chessDotComGames = (await Chessdotcom.getUserGames(username.value)).data
-  const games = chessDotComGames.games.filter(game => game.time_class === "blitz")
+  const games = chessDotComGames.games.filter(game => game.time_class === gameType.value)
 
   console.log(`Processing ${games.length} games`)
 
-  const taskQueue: Array<Promise<GameEvaluation>> = [];
+  const taskQueue: Array<Promise<GameAnalysis>> = [];
 
   const maxParallel = navigator.hardwareConcurrency;
 
@@ -59,29 +54,28 @@ async function processGames() {
 
     const isWhite = username.value === game.white.username
 
-    const gameEvaluationTask: Promise<GameEvaluation> = GameEvaluator.evaluateGame(game, isWhite, (evaluationStatus) => {
+    const gameAnalysisTask: Promise<GameAnalysis> = GameEvaluator.evaluateGame(game, isWhite, (evaluationStatus) => {
 
-      if(evaluationStatus.currentMove === evaluationStatus.totalMoves){
+      if (evaluationStatus.currentMove === evaluationStatus.totalMoves) {
         processingGames.value.delete(i)
       } else {
-        processingGames.value.set(i, evaluationStatus.currentMove /(evaluationStatus.totalMoves-1))
+        processingGames.value.set(i, evaluationStatus.currentMove / (evaluationStatus.totalMoves - 1))
       }
     })
 
-    gameEvaluationTask.then(gameEvaluation => {
-
+    gameAnalysisTask.then(gameAnalysis => {
           currentGame.value = currentGame.value + 1;
-          gameAnalyses.push(GameAnalyser.analyseGame(gameEvaluation))
+          gameAnalyses.push(gameAnalysis)
         }
     )
 
-    taskQueue.push(gameEvaluationTask);
+    taskQueue.push(gameAnalysisTask);
 
     // If the queue size reaches the maximum allowed, wait for one to finish
     if (taskQueue.length >= maxParallel) {
       await Promise.race(taskQueue);
       // Remove completed tasks from the queue
-      taskQueue.splice(0, taskQueue.findIndex(t => t === gameEvaluationTask));
+      taskQueue.splice(0, taskQueue.findIndex(t => t === gameAnalysisTask));
     }
   }
 
@@ -123,7 +117,7 @@ async function processGames() {
           <!-- Game Type Selection -->
           <div class="p-field">
             <label for="gameType">Game Type</label>
-            <Select id="gameType" v-model="gameType" :options="gameTypeOptions"  optionLabel="name"/>
+            <Select id="gameType" v-model="gameType" :options="gameTypeOptions" option-value="name" optionLabel="name"/>
 
           </div>
 
@@ -136,7 +130,9 @@ async function processGames() {
     </div>
   </div>
 
-  <ProgressBar :value="(((currentGame) / totalGames) * 100.0).toFixed(0)" ><div>{{currentGame + 1}}/{{totalGames}}</div></ProgressBar>
+  <ProgressBar :value="Math.floor((((currentGame) / totalGames) * 100.0))">
+    <div>{{ currentGame }}/{{ totalGames }}</div>
+  </ProgressBar>
 
   <all-games-summary :games-summary="gamesSummary"></all-games-summary>
 </template>

@@ -5,6 +5,7 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
+    "strict": true,
     "module": "ES6",
     "moduleResolution": "Bundler",
     "esModuleInterop": true
