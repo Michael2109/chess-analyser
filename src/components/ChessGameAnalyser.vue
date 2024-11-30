@@ -1,6 +1,5 @@
 <script setup lang="ts">
-
-import {Ref, ref} from "vue";
+import { Ref, ref } from "vue";
 import GameEvaluator from "../common/evaluation/game-evaluator.ts";
 import GamesAnalyser from "../common/analysis/games-analyser.ts";
 import GameAnalysis from "../common/analysis/game-analysis.ts";
@@ -8,66 +7,73 @@ import GamesSummary from "../common/analysis/games-summary.ts";
 import AllGamesSummary from "./AllGamesSummary.vue";
 import Chessdotcom from "../common/api/chessdotcom.ts";
 
-const username = ref("michael2109")
-const depth = ref("8")
-const cores = ref("32")
-const gameType = ref("rapid")
+const username = ref("michael2109");
+const depth = ref("8");
+const cores = ref("32");
+const gameType = ref("rapid");
 const gameTypeOptions = ref([
-  {name: 'bullet'},
-  {name: 'blitz'},
-  {name: 'rapid'}
+  { name: "bullet" },
+  { name: "blitz" },
+  { name: "rapid" },
 ]);
 
-const gamesSummary: Ref<GamesSummary | undefined> = ref(undefined)
-const currentGame: Ref<number> = ref(0)
-const totalGames: Ref<number> = ref(0)
-const processingGames: Ref<Map<number, number>> = ref(new Map<number, number>())
+const gamesSummary: Ref<GamesSummary | undefined> = ref(undefined);
+const currentGame: Ref<number> = ref(0);
+const totalGames: Ref<number> = ref(0);
+const processingGames: Ref<Map<number, number>> = ref(
+  new Map<number, number>(),
+);
 
 async function processGames() {
+  console.log(gameType.value);
 
-  console.log(gameType.value)
+  const chessDotComGames = (await Chessdotcom.getUserGames(username.value))
+    .data;
+  const games = chessDotComGames.games.filter(
+    (game) => game.time_class === gameType.value,
+  );
 
-  const chessDotComGames = (await Chessdotcom.getUserGames(username.value)).data
-  const games = chessDotComGames.games.filter(game => game.time_class === gameType.value)
-
-  console.log(`Processing ${games.length} games`)
+  console.log(`Processing ${games.length} games`);
 
   const taskQueue: Array<Promise<GameAnalysis>> = [];
 
   const maxParallel = navigator.hardwareConcurrency;
 
-  const gameAnalyses: Array<GameAnalysis> = []
+  const gameAnalyses: Array<GameAnalysis> = [];
 
-  console.log(maxParallel)
+  console.log(maxParallel);
 
   totalGames.value = games.length;
 
   for (let i = 0; i < games.length; i++) {
-
-    console.log(`Processing game ${i + 1}`)
+    console.log(`Processing game ${i + 1}`);
     const game = games[i];
 
-
     if (!game.white) {
-      continue
+      continue;
     }
 
-    const isWhite = username.value === game.white.username
+    const isWhite = username.value === game.white.username;
 
-    const gameAnalysisTask: Promise<GameAnalysis> = GameEvaluator.evaluateGame(game, isWhite, (evaluationStatus) => {
-
-      if (evaluationStatus.currentMove === evaluationStatus.totalMoves) {
-        processingGames.value.delete(i)
-      } else {
-        processingGames.value.set(i, evaluationStatus.currentMove / (evaluationStatus.totalMoves - 1))
-      }
-    })
-
-    gameAnalysisTask.then(gameAnalysis => {
-          currentGame.value = currentGame.value + 1;
-          gameAnalyses.push(gameAnalysis)
+    const gameAnalysisTask: Promise<GameAnalysis> = GameEvaluator.evaluateGame(
+      game,
+      isWhite,
+      (evaluationStatus) => {
+        if (evaluationStatus.currentMove === evaluationStatus.totalMoves) {
+          processingGames.value.delete(i);
+        } else {
+          processingGames.value.set(
+            i,
+            evaluationStatus.currentMove / (evaluationStatus.totalMoves - 1),
+          );
         }
-    )
+      },
+    );
+
+    gameAnalysisTask.then((gameAnalysis) => {
+      currentGame.value = currentGame.value + 1;
+      gameAnalyses.push(gameAnalysis);
+    });
 
     taskQueue.push(gameAnalysisTask);
 
@@ -75,18 +81,19 @@ async function processGames() {
     if (taskQueue.length >= maxParallel) {
       await Promise.race(taskQueue);
       // Remove completed tasks from the queue
-      taskQueue.splice(0, taskQueue.findIndex(t => t === gameAnalysisTask));
+      taskQueue.splice(
+        0,
+        taskQueue.findIndex((t) => t === gameAnalysisTask),
+      );
     }
   }
 
   await Promise.all(taskQueue);
 
-  gamesSummary.value = GamesAnalyser.summariseGames(gameAnalyses)
+  gamesSummary.value = GamesAnalyser.summariseGames(gameAnalyses);
 
-  console.log(gamesSummary)
-
+  console.log(gamesSummary);
 }
-
 </script>
 
 <template>
@@ -99,38 +106,63 @@ async function processGames() {
           <!-- Username Input -->
           <div class="p-field">
             <label for="username">Username</label>
-            <InputText id="username" v-model="username" placeholder="Enter username"/>
+            <InputText
+              id="username"
+              v-model="username"
+              placeholder="Enter username"
+            />
           </div>
 
           <!-- Depth Input -->
           <div class="p-field">
             <label for="depth">Depth</label>
-            <InputNumber id="depth" v-model="depth" :min="1" :max="15" placeholder="Enter depth"/>
+            <InputNumber
+              id="depth"
+              v-model="depth"
+              :min="1"
+              :max="15"
+              placeholder="Enter depth"
+            />
           </div>
 
           <!-- Cores Input -->
           <div class="p-field">
             <label for="cores">Cores</label>
-            <InputNumber id="cores" v-model="cores" :min="1" :max="32" placeholder="Enter number of cores"/>
+            <InputNumber
+              id="cores"
+              v-model="cores"
+              :min="1"
+              :max="32"
+              placeholder="Enter number of cores"
+            />
           </div>
 
           <!-- Game Type Selection -->
           <div class="p-field">
             <label for="gameType">Game Type</label>
-            <Select id="gameType" v-model="gameType" :options="gameTypeOptions" option-value="name" optionLabel="name"/>
-
+            <Select
+              id="gameType"
+              v-model="gameType"
+              :options="gameTypeOptions"
+              option-value="name"
+              optionLabel="name"
+            />
           </div>
 
           <!-- Process Button -->
           <div class="p-field">
-            <Button label="Start Analysis" icon="pi pi-play" @click="processGames"/>
+            <Button
+              label="Start Analysis"
+              icon="pi pi-play"
+              @click="processGames"
+            />
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <ProgressBar :value="Math.floor((((currentGame) / totalGames) * 100.0))">
+  <ProgressBar :value="Math.floor((currentGame / totalGames) * 100.0)">
     <div>{{ currentGame }}/{{ totalGames }}</div>
   </ProgressBar>
 

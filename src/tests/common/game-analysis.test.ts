@@ -1,11 +1,7 @@
-import {describe, test} from '@jest/globals';
-import GameAnalyser from "../../common/analysis/game-analyser.ts";
+import { describe, test } from "@jest/globals";
 
-describe('game analysis', () => {
-    test('Find blunders', () => {
-
-        const gameAnalysis = new GameAnalyser()
-
-        // expect(sum(1, 2)).toBe(3);
-    });
+describe("game analysis", () => {
+  test("Find blunders", () => {
+    // expect(sum(1, 2)).toBe(3);
+  });
 });

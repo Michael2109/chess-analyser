@@ -1,5 +1,5 @@
 interface Player {
-    username: string
+  username: string;
 }
 
-export default Player
+export default Player;

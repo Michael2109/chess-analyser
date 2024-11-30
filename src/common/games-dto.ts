@@ -1,7 +1,7 @@
 import GameDto from "./game-dto.ts";
 
 interface GamesDto {
-    games: Array<GameDto>
+  games: Array<GameDto>;
 }
 
-export default GamesDto
+export default GamesDto;

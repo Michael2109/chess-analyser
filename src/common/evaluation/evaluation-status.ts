@@ -1,6 +1,6 @@
 interface EvaluationStatus {
-    currentMove: number
-    totalMoves: number
+  currentMove: number;
+  totalMoves: number;
 }
 
-export default EvaluationStatus
+export default EvaluationStatus;

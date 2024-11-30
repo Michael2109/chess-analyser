@@ -1,20 +1,21 @@
 <script setup lang="ts">
-
-import {PropType, ref} from "vue";
+import { PropType, ref } from "vue";
 import VueApexCharts from "vue3-apexcharts";
 import GameEvaluation from "../common/evaluation/game-evaluation.ts";
 
 const props = defineProps({
   gameEvaluation: {
     type: Object as PropType<GameEvaluation>,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
 const series = ref([
   {
     name: "Evaluation",
-    data: props.gameEvaluation?.moveEvaluations.map(moveEvaluation => moveEvaluation.score / 100), // Evaluation data for each move
+    data: props.gameEvaluation?.moveEvaluations.map(
+      (moveEvaluation) => moveEvaluation.score / 100,
+    ), // Evaluation data for each move
   },
 ]);
 
@@ -33,18 +34,20 @@ const chartOptions = ref({
   },
   stroke: {
     curve: "straight",
-    width: 8
+    width: 8,
   },
   fill: {
     type: "solid", // Use a gradient to make the bottom black
-    colors: ["black"]
+    colors: ["black"],
   },
   title: {
     text: "Chess Game Analysis",
     align: "left",
   },
   xaxis: {
-    categories: props.gameEvaluation?.moveEvaluations.map(move => move.index + 1), // Labels for moves
+    categories: props.gameEvaluation?.moveEvaluations.map(
+      (move) => move.index + 1,
+    ), // Labels for moves
   },
   yaxis: {
     title: {
@@ -52,7 +55,7 @@ const chartOptions = ref({
     },
     min: -8,
     max: 8,
-    forceNiceScale: true
+    forceNiceScale: true,
   },
   tooltip: {
     y: {
@@ -60,15 +63,12 @@ const chartOptions = ref({
     },
   },
 });
-
 </script>
 
 <template>
   <div>
-    <VueApexCharts type="line" :options="chartOptions" :series="series"/>
+    <VueApexCharts type="line" :options="chartOptions" :series="series" />
   </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

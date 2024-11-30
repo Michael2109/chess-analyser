@@ -2,28 +2,28 @@ import MoveEvaluation from "./move-evaluation.ts";
 import Player from "./player.ts";
 
 enum EndStatus {
-    WIN,
-    LOSS,
-    DRAW
+  WIN,
+  LOSS,
+  DRAW,
 }
 
 interface EndInfo {
-    status: EndStatus
+  status: EndStatus;
 }
 
 interface GameEvaluation {
-    white: Player,
-    black: Player,
-    resigned: boolean,
-    opponentResigned: boolean,
-    isWhite: boolean,
-    timeControl: string,
-    uuid: string,
-    url: string,
-    moveEvaluations: Array<MoveEvaluation>
-    endInfo: EndInfo
+  white: Player;
+  black: Player;
+  resigned: boolean;
+  opponentResigned: boolean;
+  isWhite: boolean;
+  timeControl: string;
+  uuid: string;
+  url: string;
+  moveEvaluations: Array<MoveEvaluation>;
+  endInfo: EndInfo;
 }
 
-export type {EndInfo}
-export  {EndStatus}
-export default GameEvaluation
+export type { EndInfo };
+export { EndStatus };
+export default GameEvaluation;
