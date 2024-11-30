@@ -53,8 +53,10 @@ async function processGames() {
       continue;
     }
 
-    const isWhite = username.value === game.white.username;
+    const isWhite =
+      username.value.toLowerCase() === game.white.username.toLowerCase();
 
+    console.log(isWhite);
     const gameAnalysisTask: Promise<GameAnalysis> = GameEvaluator.evaluateGame(
       game,
       isWhite,

@@ -1,9 +1,11 @@
 import GamesSummary from "./games-summary.ts";
 import GameAnalysis from "./game-analysis.ts";
 import { EndStatus } from "../evaluation/game-evaluation.ts";
+import gameAnalysis from "./game-analysis.ts";
 
 class GameAnalyser {
   static summariseGames(gameAnalyses: Array<GameAnalysis>): GamesSummary {
+    console.log(gameAnalyses.map((gameAnalysis) => gameAnalysis.isWhite));
     return {
       totalGames: gameAnalyses.length,
       winRate: this.getWinRate(gameAnalyses),
