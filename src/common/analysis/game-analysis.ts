@@ -7,6 +7,8 @@ interface GameAnalysis {
   inaccuracies: Array<number>;
   mistakes: Array<number>;
   blunders: Array<number>;
+  midgameStart: number;
+  endgameStart: number;
 }
 
 export default GameAnalysis;

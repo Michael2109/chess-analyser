@@ -190,6 +190,8 @@ class GameEvaluator {
                 150,
                 Number.MAX_VALUE,
               ),
+              midgameStart: 14,
+              endgameStart: 40,
             };
 
             resolve(gameAnalysis);

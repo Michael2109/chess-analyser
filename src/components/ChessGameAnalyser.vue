@@ -4,12 +4,12 @@ import GameEvaluator from "../common/evaluation/game-evaluator.ts";
 import GamesAnalyser from "../common/analysis/games-analyser.ts";
 import GameAnalysis from "../common/analysis/game-analysis.ts";
 import GamesSummary from "../common/analysis/games-summary.ts";
-import AllGamesSummary from "./AllGamesSummary.vue";
+import AllGamesSummary from "./summary/AllGamesSummary.vue";
 import Chessdotcom from "../common/api/chessdotcom.ts";
 
 const username = ref("michael2109");
 const depth = ref("8");
-const cores = ref("32");
+const cores = ref(String(navigator.hardwareConcurrency));
 const gameType = ref("rapid");
 const gameTypeOptions = ref([
   { name: "bullet" },
@@ -25,7 +25,7 @@ const processingGames: Ref<Map<number, number>> = ref(
 );
 
 async function processGames() {
-  console.log(gameType.value);
+  currentGame.value = 0;
 
   const chessDotComGames = (await Chessdotcom.getUserGames(username.value))
     .data;
@@ -37,11 +37,7 @@ async function processGames() {
 
   const taskQueue: Array<Promise<GameAnalysis>> = [];
 
-  const maxParallel = navigator.hardwareConcurrency;
-
   const gameAnalyses: Array<GameAnalysis> = [];
-
-  console.log(maxParallel);
 
   totalGames.value = games.length;
 
@@ -56,7 +52,6 @@ async function processGames() {
     const isWhite =
       username.value.toLowerCase() === game.white.username.toLowerCase();
 
-    console.log(isWhite);
     const gameAnalysisTask: Promise<GameAnalysis> = GameEvaluator.evaluateGame(
       game,
       isWhite,
@@ -80,7 +75,7 @@ async function processGames() {
     taskQueue.push(gameAnalysisTask);
 
     // If the queue size reaches the maximum allowed, wait for one to finish
-    if (taskQueue.length >= maxParallel) {
+    if (taskQueue.length >= Number(cores.value)) {
       await Promise.race(taskQueue);
       // Remove completed tasks from the queue
       taskQueue.splice(
@@ -99,74 +94,69 @@ async function processGames() {
 </script>
 
 <template>
-  <div class="grid justify-center">
-    <div class="col-12 md-6">
-      <!-- Form Container -->
-      <div class="card p-p-4">
-        <h3>Chess Analysis Settings</h3>
-        <div class="p-fluid">
-          <!-- Username Input -->
-          <div class="p-field">
-            <label for="username">Username</label>
-            <InputText
-              id="username"
-              v-model="username"
-              placeholder="Enter username"
-            />
-          </div>
+  <div
+    class="w-full flex flex-column gap-5 justify-content-center align-items-center flex-column"
+  >
+    <!-- Form Container -->
 
-          <!-- Depth Input -->
-          <div class="p-field">
-            <label for="depth">Depth</label>
-            <InputNumber
-              id="depth"
-              v-model="depth"
-              :min="1"
-              :max="15"
-              placeholder="Enter depth"
-            />
-          </div>
+    <h3>Chess.com Analyser</h3>
 
-          <!-- Cores Input -->
-          <div class="p-field">
-            <label for="cores">Cores</label>
-            <InputNumber
-              id="cores"
-              v-model="cores"
-              :min="1"
-              :max="32"
-              placeholder="Enter number of cores"
-            />
-          </div>
+    <!-- Username Input -->
+    <FloatLabel>
+      <InputText id="username" v-model="username" />
+      <label for="username">Username</label>
+    </FloatLabel>
 
-          <!-- Game Type Selection -->
-          <div class="p-field">
-            <label for="gameType">Game Type</label>
-            <Select
-              id="gameType"
-              v-model="gameType"
-              :options="gameTypeOptions"
-              option-value="name"
-              optionLabel="name"
-            />
-          </div>
+    <!-- Depth Input -->
+    <FloatLabel>
+      <InputNumber
+        id="depth"
+        v-model="depth"
+        :min="1"
+        :max="15"
+        show-buttons
+        placeholder="Enter depth"
+      />
+      <label for="depth">Depth</label>
+    </FloatLabel>
 
-          <!-- Process Button -->
-          <div class="p-field">
-            <Button
-              label="Start Analysis"
-              icon="pi pi-play"
-              @click="processGames"
-            />
-          </div>
-        </div>
-      </div>
+    <!-- Cores Input -->
+    <FloatLabel>
+      <InputNumber id="cores" v-model="cores" :min="1" :max="32" show-buttons />
+      <label for="cores">Cores</label>
+    </FloatLabel>
+
+    <!-- Game Type Selection -->
+    <FloatLabel style="width: 220px">
+      <Select
+        class="w-full"
+        input-class="w-full"
+        style="width: 100%"
+        id="gameType"
+        v-model="gameType"
+        :options="gameTypeOptions"
+        option-value="name"
+        optionLabel="name"
+      />
+      <label for="gameType">Game Type</label>
+    </FloatLabel>
+
+    <!-- Process Button -->
+    <div class="p-field">
+      <Button label="Start Analysis" icon="pi pi-play" @click="processGames" />
     </div>
   </div>
 
-  <ProgressBar :value="Math.floor((currentGame / totalGames) * 100.0)">
-    <div>{{ currentGame }}/{{ totalGames }}</div>
-  </ProgressBar>
+  <div v-if="currentGame !== totalGames">
+    Processing games
+    <ProgressBar
+      style="width: 100%"
+      :show-value="false"
+      :value="Math.floor((currentGame / totalGames) * 100.0)"
+    >
+      <div>{{ currentGame }}/{{ totalGames }}</div>
+    </ProgressBar>
+  </div>
 
   <all-games-summary :games-summary="gamesSummary"></all-games-summary>
 </template>

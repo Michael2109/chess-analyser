@@ -1,11 +1,15 @@
+type Rates = {
+  win: number;
+  lose: number;
+  draw: number;
+};
+
 interface GamesSummary {
   totalGames: number;
-  winRate: number;
-  loseRate: number;
-  winRateWhite: number;
-  loseRateWhite: number;
-  winRateBlack: number;
-  loseRateBlack: number;
+  rates: Rates;
+  whiteRates: Rates;
+  blackRates: Rates;
+  accuracy: number;
   averageTotalMovesPerGame: number;
   averageFirstBlunder: number;
   averageFirstMistake: number;
@@ -13,3 +17,4 @@ interface GamesSummary {
 }
 
 export default GamesSummary;
+export type { Rates };

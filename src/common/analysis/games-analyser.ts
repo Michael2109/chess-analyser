@@ -1,31 +1,20 @@
-import GamesSummary from "./games-summary.ts";
+import GamesSummary, { Rates } from "./games-summary.ts";
 import GameAnalysis from "./game-analysis.ts";
 import { EndStatus } from "../evaluation/game-evaluation.ts";
 import gameAnalysis from "./game-analysis.ts";
 
 class GameAnalyser {
   static summariseGames(gameAnalyses: Array<GameAnalysis>): GamesSummary {
-    console.log(gameAnalyses.map((gameAnalysis) => gameAnalysis.isWhite));
     return {
       totalGames: gameAnalyses.length,
-      winRate: this.getWinRate(gameAnalyses),
-      loseRate: 1 - this.getWinRate(gameAnalyses),
-      winRateWhite: this.getWinRate(
+      rates: this.getRates(gameAnalyses),
+      whiteRates: this.getRates(
         gameAnalyses.filter((gameAnalysis) => gameAnalysis.isWhite),
       ),
-      winRateBlack: this.getWinRate(
+      blackRates: this.getRates(
         gameAnalyses.filter((gameAnalysis) => !gameAnalysis.isWhite),
       ),
-      loseRateWhite:
-        1 -
-        this.getWinRate(
-          gameAnalyses.filter((gameAnalysis) => gameAnalysis.isWhite),
-        ),
-      loseRateBlack:
-        1 -
-        this.getWinRate(
-          gameAnalyses.filter((gameAnalysis) => !gameAnalysis.isWhite),
-        ),
+      accuracy: this.getAverageAccuracy(gameAnalyses),
       averageTotalMovesPerGame: this.getAverageTotalMovesPerGame(gameAnalyses),
       averageFirstBlunder: this.getAverageFirstMoveOfType(
         gameAnalyses,
@@ -42,11 +31,47 @@ class GameAnalyser {
     };
   }
 
-  private static getWinRate(gameAnalyses: Array<GameAnalysis>): number {
-    const totalWins = gameAnalyses.filter(
-      (gameAnalysis) => gameAnalysis.endInfo.status === EndStatus.WIN,
-    ).length;
-    return totalWins / gameAnalyses.length;
+  private static getRates(gameAnalyses: Array<GameAnalysis>): Rates {
+    const totals = gameAnalyses.reduce(
+      (acc, curr) => {
+        acc[curr.endInfo.status]++;
+        return acc;
+      },
+      { [EndStatus.WIN]: 0, [EndStatus.LOSS]: 0, [EndStatus.DRAW]: 0 }, // Initial accumulator
+    );
+
+    return {
+      win: totals[EndStatus.WIN] / gameAnalyses.length,
+      lose: totals[EndStatus.LOSS] / gameAnalyses.length,
+      draw: totals[EndStatus.DRAW] / gameAnalyses.length,
+    };
+  }
+
+  private static getAverageAccuracy(gameAnalyses: Array<GameAnalysis>): number {
+    const gamesWithMoves = gameAnalyses.filter(
+      (gameAnalysis) =>
+        (gameAnalysis.isWhite && gameAnalysis.totalMoves > 0) ||
+        (!gameAnalysis.isWhite && gameAnalysis.totalMoves > 1),
+    );
+
+    const totalAccuracies = gamesWithMoves
+      .map((gameAnalysis) => {
+        const inaccuracies =
+          gameAnalysis.inaccuracies.length +
+          gameAnalysis.mistakes.length +
+          gameAnalysis.blunders.length;
+
+        const moves = Math.floor(gameAnalysis.totalMoves / 2) + 1;
+
+        const accurateMoves = moves - inaccuracies;
+
+        console.log(accurateMoves + " / " + moves);
+
+        return accurateMoves / moves;
+      })
+      .reduce((a, b) => a + b, 0);
+
+    return totalAccuracies / gamesWithMoves.length;
   }
 
   private static getAverageTotalMovesPerGame(
