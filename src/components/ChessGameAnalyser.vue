@@ -6,6 +6,7 @@ import GameAnalysis from "../common/analysis/game-analysis.ts";
 import GamesSummary from "../common/analysis/games-summary.ts";
 import AllGamesSummary from "./summary/AllGamesSummary.vue";
 import Chessdotcom from "../common/api/chessdotcom.ts";
+import WeeklyChangeSummary from "./summary/weekly/WeeklyChangeSummary.vue";
 
 const username = ref("michael2109");
 const depth = ref("8");
@@ -24,25 +25,21 @@ const processingGames: Ref<Map<number, number>> = ref(
   new Map<number, number>(),
 );
 
+const gameAnalyses: Ref<Array<GameAnalysis>> = ref([]);
+
 async function processGames() {
   currentGame.value = 0;
 
-  const chessDotComGames = (await Chessdotcom.getUserGames(username.value))
-    .data;
+  const chessDotComGames = await Chessdotcom.getUserGames(username.value);
   const games = chessDotComGames.games.filter(
     (game) => game.time_class === gameType.value,
   );
 
-  console.log(`Processing ${games.length} games`);
-
   const taskQueue: Array<Promise<GameAnalysis>> = [];
-
-  const gameAnalyses: Array<GameAnalysis> = [];
 
   totalGames.value = games.length;
 
   for (let i = 0; i < games.length; i++) {
-    console.log(`Processing game ${i + 1}`);
     const game = games[i];
 
     if (!game.white) {
@@ -69,7 +66,7 @@ async function processGames() {
 
     gameAnalysisTask.then((gameAnalysis) => {
       currentGame.value = currentGame.value + 1;
-      gameAnalyses.push(gameAnalysis);
+      gameAnalyses.value.push(gameAnalysis);
     });
 
     taskQueue.push(gameAnalysisTask);
@@ -87,9 +84,9 @@ async function processGames() {
 
   await Promise.all(taskQueue);
 
-  gamesSummary.value = GamesAnalyser.summariseGames(gameAnalyses);
+  gameAnalyses.value = [...gameAnalyses.value];
 
-  console.log(gamesSummary);
+  gamesSummary.value = GamesAnalyser.summariseGames(gameAnalyses.value);
 }
 </script>
 
@@ -159,4 +156,5 @@ async function processGames() {
   </div>
 
   <all-games-summary :games-summary="gamesSummary"></all-games-summary>
+  <weekly-change-summary :game-analyses="gameAnalyses"></weekly-change-summary>
 </template>

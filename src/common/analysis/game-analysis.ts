@@ -1,6 +1,8 @@
 import { EndInfo } from "../evaluation/game-evaluation.ts";
+import { Dayjs } from "dayjs";
 
 interface GameAnalysis {
+  date: Dayjs;
   isWhite: boolean;
   totalMoves: number;
   endInfo: EndInfo;

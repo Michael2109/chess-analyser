@@ -1,7 +1,6 @@
 import GamesSummary, { Rates } from "./games-summary.ts";
 import GameAnalysis from "./game-analysis.ts";
 import { EndStatus } from "../evaluation/game-evaluation.ts";
-import gameAnalysis from "./game-analysis.ts";
 
 class GameAnalyser {
   static summariseGames(gameAnalyses: Array<GameAnalysis>): GamesSummary {
@@ -47,7 +46,7 @@ class GameAnalyser {
     };
   }
 
-  private static getAverageAccuracy(gameAnalyses: Array<GameAnalysis>): number {
+  static getAverageAccuracy(gameAnalyses: Array<GameAnalysis>): number {
     const gamesWithMoves = gameAnalyses.filter(
       (gameAnalysis) =>
         (gameAnalysis.isWhite && gameAnalysis.totalMoves > 0) ||
@@ -64,8 +63,6 @@ class GameAnalyser {
         const moves = Math.floor(gameAnalysis.totalMoves / 2) + 1;
 
         const accurateMoves = moves - inaccuracies;
-
-        console.log(accurateMoves + " / " + moves);
 
         return accurateMoves / moves;
       })

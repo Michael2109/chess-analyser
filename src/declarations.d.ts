@@ -9,5 +9,3 @@ declare module "stockfish" {
 
   export default Stockfish;
 }
-
-declare module "pgn-parser";

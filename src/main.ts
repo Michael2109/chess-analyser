@@ -12,8 +12,14 @@ import Select from "primevue/select";
 import Chart from "primevue/chart";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import weekOfYear from "dayjs/plugin/weekOfYear";
+import dayjs from "dayjs";
 
 const app = createApp(App);
+
+dayjs.extend(customParseFormat);
+dayjs.extend(weekOfYear);
 
 app.use(VueApexCharts).use(PrimeVue, {
   theme: {

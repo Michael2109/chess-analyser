@@ -1,10 +1,11 @@
 import GameDto from "../game-dto.ts";
-import pgnParser from "pgn-parser";
+import pgnParser, { ParsedPGN } from "pgn-parser";
 import { Chess } from "chess.js";
 import MoveEvaluation from "./move-evaluation.ts";
 import { EndStatus } from "./game-evaluation.ts";
 import EvaluationStatus from "./evaluation-status.ts";
 import GameAnalysis from "../analysis/game-analysis.ts";
+import dayjs from "dayjs";
 
 const STOCKFISH_DEPTH = 8;
 
@@ -40,6 +41,11 @@ class GameEvaluator {
     }
 
     return lanMoves;
+  }
+
+  static parsePgn(pgn: string): ParsedPGN {
+    const [result] = pgnParser.parse(pgn);
+    return result;
   }
 
   static getEndStatus(gameDto: GameDto, isWhite: boolean): EndStatus {
@@ -166,7 +172,12 @@ class GameEvaluator {
             stockfish.terminate();
             listener({ currentMove: moves.length, totalMoves: moves.length });
 
+            const parsedPgn = GameEvaluator.parsePgn(gameDto.pgn);
+            const dateHeader = parsedPgn.headers?.find(
+              (header) => header.name === "Date",
+            );
             const gameAnalysis: GameAnalysis = {
+              date: dayjs(dateHeader!.value, "YYYY.MM.DD"),
               isWhite: isWhite,
               endInfo: {
                 status: GameEvaluator.getEndStatus(gameDto, isWhite),

@@ -1,5 +1,6 @@
 import MoveEvaluation from "./move-evaluation.ts";
 import Player from "./player.ts";
+import { Dayjs } from "dayjs";
 
 enum EndStatus {
   WIN,
@@ -12,6 +13,7 @@ interface EndInfo {
 }
 
 interface GameEvaluation {
+  date: Dayjs;
   white: Player;
   black: Player;
   resigned: boolean;

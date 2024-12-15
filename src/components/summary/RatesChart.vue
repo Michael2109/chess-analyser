@@ -47,7 +47,6 @@ const chartOptions = ref();
 const setChartData = () => {
   const documentStyle = getComputedStyle(document.body);
 
-  console.log(props);
   return {
     labels: ["Win", "Draw", "Lose"],
     datasets: [
